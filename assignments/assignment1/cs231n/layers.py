@@ -776,8 +776,19 @@ def svm_loss(x, y):
     # TODO: Copy over your solution from A1.
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-    pass
+    N = x.shape[0]
+    
+    z = x[range(N),y].reshape([N,1])
+    
+    margin = np.maximum(0, x - z + 1)
+    margin[range(N),y] = 0
+    loss = np.sum(margin)/N
+    
+    B = margin
+    B = np.where(B<=0, 0, 1)
+    row_sum = np.sum(B, axis=1)
+    B[range(B.shape[0]), y] -= row_sum.T
+    dx = B/N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -807,7 +818,19 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    N = x.shape[0]
+    x = x - np.max(x, axis=1, keepdims=True)
+    
+    # loss
+    z = np.sum(x[range(N),y])
+    ex = np.sum(np.log(np.sum(np.exp(x), axis=1)))
+    loss = ex - z
+    loss /= N
+
+    # gradient
+    dx = np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=True)
+    dx[range(N),y] -= 1
+    dx /= N
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
