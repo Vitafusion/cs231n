@@ -74,7 +74,12 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        self.params['W1'] = weight_scale*np.random.randn(input_dim, hidden_dims[0])
+        self.params['b1'] = np.zeros(hidden_dims[0])
+        self.params['W2'] = weight_scale*np.random.randn(hidden_dims[0], hidden_dims[1])
+        self.params['b2'] = np.zeros(hidden_dims[1])
+        self.params['W3'] = weight_scale*np.random.randn(hidden_dims[1], num_classes)
+        self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
