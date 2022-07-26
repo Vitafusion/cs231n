@@ -160,8 +160,20 @@ class FullyConnectedNet(object):
         b2 = self.params['b2']
         b3 = self.params['b3']
         reg = self.reg
-        affine_forward(X, W1, b1)
-
+        
+        # Layer 1 
+        Z1, z1_cache = affine_forward(X, W1, b1)
+        A1, a1_cache = relu_forward(Z1)
+        
+        # Layer 2
+        Z2, z2_cache = affine_forward(A1, W2, b2)
+        A2, a2_cache = relu_forward(Z2)
+        
+        # Layer 3
+        Z3, z3_cache = affine_forward(A2, W3, b3)
+        
+        scores = Z3
+        
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -187,7 +199,26 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        loss, dZ3 = softmax_loss(scores, y)
+        
+        # Layer 3
+        dA2, dW3, db3 = affine_backward(dZ3, z3_cache)
+        
+        # Layer 2
+        dZ2 = relu_backward(dA2, a2_cache)
+        dA1, dW2, db2 = affine_backward(dZ2, z2_cache)
+        
+        # Layer 1
+        dZ1 = relu_backward(dA1, a1_cache)
+        dx, dW1, db1 = affine_backward(dZ1, z1_cache)
+        
+        grads['W1'] = dW1
+        grads['W2'] = dW2
+        grads['W3'] = dW3
+        grads['b1'] = db1
+        grads['b2'] = db2
+        grads['b3'] = db3
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
