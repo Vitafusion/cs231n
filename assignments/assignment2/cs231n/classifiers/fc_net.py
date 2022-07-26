@@ -153,7 +153,14 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        W1 = self.params['W1']
+        W2 = self.params['W2']
+        W3 = self.params['W3']
+        b1 = self.params['b1']
+        b2 = self.params['b2']
+        b3 = self.params['b3']
+        reg = self.reg
+        affine_forward(X, W1, b1)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
