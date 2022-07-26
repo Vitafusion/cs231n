@@ -74,6 +74,21 @@ class FullyConnectedNet(object):
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
+        
+        np.random.seed(3)
+        parameters = {}
+        L = len(layer_dims)            # number of layers in the network
+
+        for l in range(1, L):
+        parameters['W' + str(l)] = np.random.randn(layer_dims[l],layer_dims[l-1])*0.01
+        parameters['b' + str(l)] = np.zeros((layer_dims[l],1))
+        
+        # assert(parameters['W' + str(l)].shape == (layer_dims[l], layer_dims[l-1]))
+        # assert(parameters['b' + str(l)].shape == (layer_dims[l], 1))
+
+        
+        
+        
         self.params['W1'] = weight_scale*np.random.randn(input_dim, hidden_dims[0])
         self.params['b1'] = np.zeros(hidden_dims[0])
         self.params['W2'] = weight_scale*np.random.randn(hidden_dims[0], hidden_dims[1])
