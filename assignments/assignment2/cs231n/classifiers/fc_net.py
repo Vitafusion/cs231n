@@ -75,26 +75,26 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
         
-        np.random.seed(3)
-        parameters = {}
-        L = len(layer_dims)            # number of layers in the network
+        L = self.num_layers            # number of layers in the network
+        layer_dims = [input_dim, *hidden_dims, num_classes]
+        
+        # print("layer_dims=" + str(layer_dims))
+        
+        for l in range(L):
+            self.params['W' + str(l+1)] = np.random.randn(layer_dims[l],layer_dims[l+1])*weight_scale
+            self.params['b' + str(l+1)] = np.zeros(layer_dims[l+1])
+        
 
-        for l in range(1, L):
-        parameters['W' + str(l)] = np.random.randn(layer_dims[l],layer_dims[l-1])*0.01
-        parameters['b' + str(l)] = np.zeros((layer_dims[l],1))
-        
-        # assert(parameters['W' + str(l)].shape == (layer_dims[l], layer_dims[l-1]))
-        # assert(parameters['b' + str(l)].shape == (layer_dims[l], 1))
-
+#         assert(self.params['W' + str(1)].shape == (input_dim, hidden_dims[0]))
+#         assert(self.params['b' + str(1)].shape == (hidden_dims[0], 1))
         
         
-        
-        self.params['W1'] = weight_scale*np.random.randn(input_dim, hidden_dims[0])
-        self.params['b1'] = np.zeros(hidden_dims[0])
-        self.params['W2'] = weight_scale*np.random.randn(hidden_dims[0], hidden_dims[1])
-        self.params['b2'] = np.zeros(hidden_dims[1])
-        self.params['W3'] = weight_scale*np.random.randn(hidden_dims[1], num_classes)
-        self.params['b3'] = np.zeros(num_classes)
+#         self.params['W1'] = weight_scale*np.random.randn(input_dim, hidden_dims[0])
+#         self.params['b1'] = np.zeros(hidden_dims[0])
+#         self.params['W2'] = weight_scale*np.random.randn(hidden_dims[0], hidden_dims[1])
+#         self.params['b2'] = np.zeros(hidden_dims[1])
+#         self.params['W3'] = weight_scale*np.random.randn(hidden_dims[1], num_classes)
+#         self.params['b3'] = np.zeros(num_classes)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -167,27 +167,56 @@ class FullyConnectedNet(object):
         # layer, etc.                                                              #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+        
 
-        W1 = self.params['W1']
-        W2 = self.params['W2']
-        W3 = self.params['W3']
-        b1 = self.params['b1']
-        b2 = self.params['b2']
-        b3 = self.params['b3']
-        reg = self.reg
+        L = self.num_layers
+        caches = []
+        A = X
+        
+        
+        for l in range(L-1):
+            A_prev = A
+            A, cache = affine_relu_forward(A, self.params["W"+str(l+1)], self.params["b"+str(l+1)])
+            caches.append(cache)
+        
+        # Last layer: affine - softmax
+        scores, cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
+        caches.append(cache)
+        
+#         # Layer 1 to L-1
+#         for l in range(L-1):
+#             Z_prev = A
+#             Z, Z_cache = affine_forward(Z_prev, self.params["W" + str(l+1)], self.params["b" + str(l+1)])
+#             A, A_cache = relu_forward(Z)
+#             Z_caches.append(Z_cache)
+#             A_caches.append(A_cache)
+        
+#         # Last layer: affine - softmax
+#         Z, Z_cache = affine_forward(A, self.params["W" + str(L)], self.params["b" + str(L)])
+#         Z_caches.append(Z_cache)
+        
+#         scores = Z
+        
+#         W1 = self.params['W1']
+#         W2 = self.params['W2']
+#         W3 = self.params['W3']
+#         b1 = self.params['b1']
+#         b2 = self.params['b2']
+#         b3 = self.params['b3']
+
         
         # Layer 1 
-        Z1, z1_cache = affine_forward(X, W1, b1)
-        A1, a1_cache = relu_forward(Z1)
+#        Z1, z1_cache = affine_forward(X, W1, b1)
+#        A1, a1_cache = relu_forward(Z1)
         
         # Layer 2
-        Z2, z2_cache = affine_forward(A1, W2, b2)
-        A2, a2_cache = relu_forward(Z2)
+#        Z2, z2_cache = affine_forward(A1, W2, b2)
+#        A2, a2_cache = relu_forward(Z2)
         
         # Layer 3
-        Z3, z3_cache = affine_forward(A2, W3, b3)
+#        Z3, z3_cache = affine_forward(A2, W3, b3)
         
-        scores = Z3
+#        scores = Z3
         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -213,26 +242,48 @@ class FullyConnectedNet(object):
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
-
-        loss, dZ3 = softmax_loss(scores, y)
         
-        # Layer 3
-        dA2, dW3, db3 = affine_backward(dZ3, z3_cache)
+        print(len(caches))
         
-        # Layer 2
-        dZ2 = relu_backward(dA2, a2_cache)
-        dA1, dW2, db2 = affine_backward(dZ2, z2_cache)
+        # affine - softmax
+        loss, dout = softmax_loss(scores, y)
+        dA, grads["dW"+str(L)], grads["db"+str(L)] = affine_backward(dout, caches[L-1])
         
-        # Layer 1
-        dZ1 = relu_backward(dA1, a1_cache)
-        dx, dW1, db1 = affine_backward(dZ1, z1_cache)
+        # first L-1 layers
+        for l in reversed(range(L-1)):
+            dout = dA
+            dA, grads["dW"+str(l+1)], grads["db"+str(l+1)] = affine_relu_backward(dout, caches[l])
         
-        grads['W1'] = dW1
-        grads['W2'] = dW2
-        grads['W3'] = dW3
-        grads['b1'] = db1
-        grads['b2'] = db2
-        grads['b3'] = db3
+        
+#         loss, dZ = softmax_loss(scores, y)
+#         dA, grads["dW" + str(L)], grads["db" + str(L)] = affine_backward(dZ, Z_caches[L-1]) 
+        
+#         for l in reversed(range(L-1)):
+#             dA_prev = dA
+#             dZ = relu_backward(dA_prev, A_caches[l])
+#             dA, grads["dW" + str(l+1)], grads["db" + str(l+1)] = affine_backward(dZ, Z_caches[l]) 
+        
+#         print(len(A_caches), len(Z_caches))
+        
+#         loss, dZ3 = softmax_loss(scores, y)
+        
+#         # Layer 3
+#         dA2, dW3, db3 = affine_backward(dZ3, z3_cache)
+        
+#         # Layer 2
+#         dZ2 = relu_backward(dA2, a2_cache)
+#         dA1, dW2, db2 = affine_backward(dZ2, z2_cache)
+        
+#         # Layer 1
+#         dZ1 = relu_backward(dA1, a1_cache)
+#         dx, dW1, db1 = affine_backward(dZ1, z1_cache)
+        
+#         grads['W1'] = dW1
+#         grads['W2'] = dW2
+#         grads['W3'] = dW3
+#         grads['b1'] = db1
+#         grads['b2'] = db2
+#         grads['b3'] = db3
         
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
