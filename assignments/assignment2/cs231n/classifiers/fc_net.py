@@ -84,6 +84,12 @@ class FullyConnectedNet(object):
             self.params['W' + str(l+1)] = np.random.randn(layer_dims[l],layer_dims[l+1])*weight_scale
             self.params['b' + str(l+1)] = np.zeros(layer_dims[l+1])
         
+        if self.normalization == "batchnorm":
+            for l in range(L-1):                
+                self.params["gamma"+str(l+1)] = np.ones(layer_dims[l+1])
+                self.params["beta"+str(l+1)] = np.zeros(layer_dims[l+1])
+                
+        
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
@@ -162,38 +168,50 @@ class FullyConnectedNet(object):
         #########################################################
         # method 1: using only affine_forward and relu_forward
         ##########################################################
-#         z_caches = []
-#         a_caches = []
-#         A = X
+        z_caches = []
+        a_caches = []
         
-#         # First L-1 layer
-#         for l in range(L-1):
-#             A_prev = A
-#             Z, z_cache = affine_forward(A_prev, self.params["W"+str(l+1)], self.params["b"+str(l+1)])
-#             A, a_cache = relu_forward(Z)
-#             z_caches.append(z_cache)
-#             a_caches.append(a_cache)
+        if self.normalization == "batchnorm":
+            bn_caches = []
         
-#         # L layer: affine - softmax
-#         scores, z_cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
-#         z_caches.append(z_cache)
+        A = X
+        
+        
+        # First L-1 layer
+        for l in range(L-1):
+            A_prev = A
+            Z, z_cache = affine_forward(A_prev, self.params["W"+str(l+1)], self.params["b"+str(l+1)])
+            
+            if self.normalization == "batchnorm":
+                gamma = self.params["gamma"+str(l+1)]
+                beta = self.params["beta"+str(l+1)]
+                Z, bn_cache = batchnorm_forward(Z, gamma, beta, self.bn_params[l])
+                bn_caches.append(bn_cache)
+                
+            A, a_cache = relu_forward(Z)
+            z_caches.append(z_cache)
+            a_caches.append(a_cache)
+        
+        # L layer: affine - softmax
+        scores, z_cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
+        z_caches.append(z_cache)
         
         
         
         #########################################################
         # method 2: using affine_relu_forward
         ##########################################################
-        caches = []
-        A = X
-        #  First L-1 layers
-        for l in range(L-1):
-            A_prev = A
-            A, cache = affine_relu_forward(A_prev, self.params["W"+str(l+1)], self.params["b"+str(l+1)])
-            caches.append(cache)
+#         caches = []
+#         A = X
+#         #  First L-1 layers
+#         for l in range(L-1):
+#             A_prev = A
+#             A, cache = affine_relu_forward(A_prev, self.params["W"+str(l+1)], self.params["b"+str(l+1)])
+#             caches.append(cache)
         
-        # affine - softmax layer
-        scores, cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
-        caches.append(cache)
+#         # affine - softmax layer
+#         scores, cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
+#         caches.append(cache)
         
         
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -228,24 +246,27 @@ class FullyConnectedNet(object):
         # method 1: using only affine_forward and relu_forward
         ##########################################################
         # L layer: affine - softmax
-#         dA, grads["W"+str(L)], grads["b"+str(L)] = affine_backward(dZ, z_caches[L-1])
+        dA, grads["W"+str(L)], grads["b"+str(L)] = affine_backward(dZ, z_caches[L-1])
         
-#         # L-1 layers
-#         for l in reversed(range(L-1)):
-#             dA_prev = dA
-#             dZ = relu_backward(dA_prev, a_caches[l])
-#             dA, grads["W"+str(l+1)], grads["b"+str(l+1)] = affine_backward(dZ, z_caches[l])
+        # L-1 layers
+        for l in reversed(range(L-1)):
+            dA_prev = dA
+            dZ = relu_backward(dA_prev, a_caches[l])
             
+            if self.normalization == "batchnorm":
+                dZ, grads["gamma"+str(l+1)], grads["beta"+str(l+1)] = batchnorm_backward_alt(dZ, bn_caches[l])
+                
+            dA, grads["W"+str(l+1)], grads["b"+str(l+1)] = affine_backward(dZ, z_caches[l])
             
         #########################################################
         # method 2: using affine_relu_forward
         ##########################################################    
         # affine - softmax layer
-        dout, grads["W"+str(L)], grads["b"+str(L)] = affine_backward(dZ, caches[L-1])
+#         dout, grads["W"+str(L)], grads["b"+str(L)] = affine_backward(dZ, caches[L-1])
         
-        # L-1 layer
-        for l in reversed(range(L-1)):
-            dout, grads["W"+str(l+1)], grads["b"+str(l+1)] = affine_relu_backward(dout, caches[l])
+#         # L-1 layer
+#         for l in reversed(range(L-1)):
+#             dout, grads["W"+str(l+1)], grads["b"+str(l+1)] = affine_relu_backward(dout, caches[l])
         
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
