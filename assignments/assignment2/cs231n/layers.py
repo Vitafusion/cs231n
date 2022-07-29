@@ -392,8 +392,25 @@ def layernorm_forward(x, gamma, beta, ln_param):
     # the batch norm code and leave it almost unchanged?                      #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    x = x.T
+    N = x.shape[0]
+   
+    mean = 1/N*np.sum(x, axis=0)
+    var = np.var(x, axis=0)
+    std = np.sqrt(var+eps)
+    x_hat = (x-mean)/std
+    
+    x_hat = x_hat.T
+    out = gamma*x_hat + beta
 
-    pass
+    cache = (mean, var, x, x_hat, beta, gamma, eps, std)
+#     mean = np.mean(x, axis=1, keepdims=True)
+#     var = np.var(x, axis=1, keepdims=True)
+#     std = np.sqrt(var+eps)
+#     x_hat = (x-mean)/std
+#     out = gamma*x_hat + beta
+#     cache = (mean, var, x, x_hat, beta, gamma, eps, std)
+    
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -426,8 +443,26 @@ def layernorm_backward(dout, cache):
     # still apply!                                                            #
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+    mean, var, x, x_hat, beta, gamma, eps, std = cache
 
-    pass
+    dgamma = np.sum(dout*x_hat, axis=0)
+
+    dbeta = np.sum(dout, axis=0)
+
+    
+    N = x.shape[0]
+    dx_hat = dout * gamma
+    dx_hat = dx_hat.T
+
+    
+    
+    dvar = -1/2*pow((var+eps),-3/2)*np.sum(dx_hat*(x-mean), axis=0)
+
+    dmean = -1/np.sqrt(var+eps)*np.sum(dx_hat, axis=0) + dvar*np.sum(-2*(x-mean), axis=0)/N
+    dx = dx_hat*1/np.sqrt(var+eps) + dvar*2*(x-mean)/N + dmean/N
+
+    
+    dx = dx.T
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
