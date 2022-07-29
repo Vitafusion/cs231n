@@ -164,6 +164,7 @@ class FullyConnectedNet(object):
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         
         L = self.num_layers
+         
         
         #########################################################
         # method 1: using only affine_forward and relu_forward
@@ -241,12 +242,18 @@ class FullyConnectedNet(object):
         
         loss, dZ = softmax_loss(scores, y)
         
-        
+        # add regularization loss
+        for layer in range(self.num_layers):
+            W = self.params['W' + str(layer + 1)]
+            loss += 0.5 * self.reg * np.sum(W * W)    
         #########################################################
         # method 1: using only affine_forward and relu_forward
         ##########################################################
         # L layer: affine - softmax
         dA, grads["W"+str(L)], grads["b"+str(L)] = affine_backward(dZ, z_caches[L-1])
+        
+        grads['W' + str(L)] += self.reg * self.params['W' + str(L)]
+ 
         
         # L-1 layers
         for l in reversed(range(L-1)):
@@ -257,6 +264,8 @@ class FullyConnectedNet(object):
                 dZ, grads["gamma"+str(l+1)], grads["beta"+str(l+1)] = batchnorm_backward_alt(dZ, bn_caches[l])
                 
             dA, grads["W"+str(l+1)], grads["b"+str(l+1)] = affine_backward(dZ, z_caches[l])
+            grads['W' + str(l + 1)] += self.reg * self.params['W' + str(l + 1)]
+
             
         #########################################################
         # method 2: using affine_relu_forward
