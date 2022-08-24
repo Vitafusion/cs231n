@@ -171,6 +171,7 @@ class FullyConnectedNet(object):
         ##########################################################
         z_caches = []
         a_caches = []
+        dropout_caches = []
         
         if self.normalization == "batchnorm":
             bn_caches = []
@@ -192,6 +193,9 @@ class FullyConnectedNet(object):
             A, a_cache = relu_forward(Z)
             z_caches.append(z_cache)
             a_caches.append(a_cache)
+            if self.use_dropout:
+                A, dropout_cache = dropout_forward(A, self.dropout_param)
+                dropout_caches.append(dropout_cache)
         
         # L layer: affine - softmax
         scores, z_cache = affine_forward(A, self.params["W"+str(L)], self.params["b"+str(L)])
@@ -258,6 +262,9 @@ class FullyConnectedNet(object):
         # L-1 layers
         for l in reversed(range(L-1)):
             dA_prev = dA
+            
+            if self.use_dropout:
+                dA_prev = dropout_backward(dA_prev, dropout_caches[l])
             dZ = relu_backward(dA_prev, a_caches[l])
             
             if self.normalization == "batchnorm":
